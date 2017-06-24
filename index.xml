@@ -6,10 +6,19 @@
     <description>Recent content on 技术随笔</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Jun 2017 17:27:29 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 24 Jun 2017 19:41:07 +0800</lastBuildDate>
     
 	<atom:link href="https://rongyi.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Vim</title>
+      <link>https://rongyi.github.io/post/vim/</link>
+      <pubDate>Sat, 24 Jun 2017 19:41:07 +0800</pubDate>
+      
+      <guid>https://rongyi.github.io/post/vim/</guid>
+      <description>Table of Contents 1. 简介 2. 移动 3. 编辑上下文 4. 复制粘贴 5. 查找/替换/删除 6. 宏与脚本 7. 保存 8. Vim hacks笔记 9. Text Object 10. 结语 11. 推荐读物 简介 一个完美的输入场景应该</description>
+    </item>
     
     <item>
       <title>About</title>
