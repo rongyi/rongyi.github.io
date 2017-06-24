@@ -1,0 +1,52 @@
+                              ━━━━━━
+                                  HUGO
+
+
+                                   ry
+                              ━━━━━━
+
+
+Table of Contents
+─────────────────
+
+1 install hugo
+2 create a new static site
+3 create new post
+4 add theme and start server and test
+
+
+— title: "Hugo" date: 2017-06-24T16:59:51+08:00 draft: false —
+
+
+1 install hugo
+══════════════
+
+  ┌────
+  │ go get github.com/kardianos/govendor
+  │ govendor get github.com/gohugoio/hugo
+  └────
+
+
+2 create a new static site
+══════════════════════════
+
+  ┌────
+  │ hugo new site bookshelf
+  └────
+
+
+3 create new post
+═════════════════
+
+  ┌────
+  │ hugo new post/good-to-great.md
+  │ # edit the content of this file
+  └────
+
+
+4 add theme and start server and test
+═════════════════════════════════════
+
+  ┌────
+  │ hugo server --buildDrafts --theme=abc
+  └────
