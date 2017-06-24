@@ -1,0 +1,212 @@
+    <!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="荣怡">
+		<meta name="description" content="雁过留声">
+		<meta name="generator" content="Hugo 0.25-DEV" />
+		<title>libpcap代码剖析 &middot; 技术随笔</title>
+		<link rel="shortcut icon" href="https://rongyi.github.io/images/favicon.ico">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/style.css">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/highlight.css">
+		
+
+		
+		<link rel="stylesheet" href="https://rongyi.github.io/css/font-awesome.min.css">
+		
+
+		
+	</head>
+
+    <body>
+       <nav class="main-nav">
+	
+	
+		<a href='https://rongyi.github.io/'> <span class="arrow">←</span>Home</a>
+	
+	<a href='https://rongyi.github.io/post'>Archive</a>
+	<a href='https://rongyi.github.io/tags'>Tags</a>
+	<a href='https://rongyi.github.io/about'>About</a>
+
+	
+
+	
+</nav>
+
+
+        <section id="wrapper">
+            <article class="post">
+                <header>
+                    <h1>
+                        libpcap代码剖析
+                    </h1>
+                    <h2 class="headline">
+                    Jun 24, 2017 19:56
+                    · 916 words
+                    · 2 minutes read
+                      <span class="tags">
+                      
+                      </span>
+                    </h2>
+                </header>
+                
+                <section id="post-body">
+                    
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. 简介</a></li>
+<li><a href="#sec-2">2. 硬件设备的发现</a></li>
+<li><a href="#sec-3">3. 打开接口</a>
+<ul>
+<li><a href="#sec-3-1">3.1. <code>pcap_create</code></a></li>
+<li><a href="#sec-3-2">3.2. <code>pcap_activate</code></a>
+<ul>
+<li><a href="#sec-3-2-1">3.2.1. 获取link层协议</a></li>
+</ul>
+</li>
+<li><a href="#sec-3-3">3.3. 注意点:</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<h1 id="简介-a-id-sec-1-name-sec-1-a">简介<a id="sec-1" name="sec-1"></a></h1>
+
+<p><code>libpcap</code> 是抓包不可或缺的一个跨平台库，本篇文档试图剖析 <code>libpcap</code>  Linux平台上核心API的实现细节。</p>
+
+<p>使用 <code>libpcap</code> 的主要步骤如下：</p>
+
+<ol>
+<li>找到(或直接指定)接口(find)</li>
+<li>打开此接口(setup)</li>
+<li>启动，开始(start)</li>
+</ol>
+
+<p>关注的主要问题有：</p>
+
+<ul>
+<li>硬件设备的发现</li>
+<li>网络数据的获取</li>
+<li>包格式</li>
+<li>filter的设置机制</li>
+</ul>
+
+<h1 id="硬件设备的发现-a-id-sec-2-name-sec-2-a">硬件设备的发现<a id="sec-2" name="sec-2"></a></h1>
+
+<p>主要通过这个接口实现：</p>
+
+<pre><code>pcap_if_t *pcap_findalldevs()
+</code></pre>
+
+<p>内部的实现细节是通过调用 <code>getifaddrs</code> C API来获得本地网卡地址信息，由于一块网卡可能含多个地址，所以在处理时有去考虑这样的情况。可以查看 <code>pcap_findalldevs</code> 接口调用的static函数 <code>add_or_find_if</code> 了解具体实现细节。</p>
+
+<p>接口的返回值指针类型是这样的一个结构体：</p>
+
+<pre><code>struct pcap_if {
+  struct pcap_if *next; # 通过next来将系统所有网络设备串在单链表上。
+  char *name;
+  char *description;
+  struct pcap_addr *addresses;
+  bpf_u_int32 flags;
+}
+</code></pre>
+
+<p>主要是在地址之上再包装些描述信息。 <code>addresses</code> 的类型定义如下：</p>
+
+<pre><code>struct pcap_addr {
+  struct pcap_addr *next;
+  struct sockaddr *addr;
+  struct sockaddr *netmask;
+  struct sockaddr *broadaddr;
+  struct sockaddr *dstaddr;
+}
+</code></pre>
+
+<p><code>tcpdump</code> 的实现中当不指定网卡时调用libpcap的 <code>pcap_lookdev</code> 接口，此接口就是获得 <code>pcap_findalldevs</code> 返回的单链表第一个设备的name属性。</p>
+
+<h1 id="打开接口-a-id-sec-3-name-sec-3-a">打开接口<a id="sec-3" name="sec-3"></a></h1>
+
+<p>此接口名称: <code>pcap_open_live</code> 此函数的调用栈如下:</p>
+
+<pre><code>.
+└── pcap_open_live
+  ├── pcap_create
+  │   └── pcapp_create_common
+  ├── pcap_set_snaplen
+  ├── pcap_set_promisc
+  └── pcap_set_timeout
+  ├── pcap_activate
+</code></pre>
+
+<h2 id="pcap-create-a-id-sec-3-1-name-sec-3-1-a"><code>pcap_create</code><a id="sec-3-1" name="sec-3-1"></a></h2>
+
+<p>此函数主要是初始化 <code>pcap_t</code> 核心结构体。完成的主要任务有：</p>
+
+<ol>
+<li>分配 <code>pcap_t</code> 结构体内存</li>
+<li>对结构体中的 <strong>平台无关</strong> 属性采用默认值设置</li>
+<li>对结构体中的 <strong>平台相关</strong> 属性（主要是一些以 <code>_op</code> 字样结尾）指定默认一个无任何操作的函数。这一过程可以在其调用的static函数 <code>initialize_op</code> 可以体现。</li>
+<li>指定平台相关的初始化函数入口，比如Linux平台上指定active操作的函数为 <code>pcap_activate_linux</code></li>
+</ol>
+
+<h2 id="pcap-activate-a-id-sec-3-2-name-sec-3-2-a"><code>pcap_activate</code><a id="sec-3-2" name="sec-3-2"></a></h2>
+
+<p>此函数主要是绑定raw socket来实现抓取数据。</p>
+
+<p>实现的步骤如下：
+1.  socket()
+2.  setsocketopt()
+3.  mmap()</p>
+
+<h3 id="获取link层协议-a-id-sec-3-2-1-name-sec-3-2-1-a">获取link层协议<a id="sec-3-2-1" name="sec-3-2-1"></a></h3>
+
+<p>在 <code>pcap/bpf.h</code> 中定义了一些link层类型，先通过函数 <code>iface_get_arp_type</code> 获得arp层的类型，然后通过函数 <code>map_arphrd_to_dlt</code> 来将此类型转化为自己定义的类型。</p>
+
+<p>这个过程代码看的懂，但是与kernel深度耦合，不理解kernel里面 <code>TPACKET_V2</code> 等实现完全白搭，所以至此，代码跟踪开展不下去了，给跪了，了解kernel 网络部分！！</p>
+
+<h2 id="注意点-a-id-sec-3-3-name-sec-3-3-a">注意点:<a id="sec-3-3" name="sec-3-3"></a></h2>
+
+<p>libpcap性能还是一般般,对于像镜像流量分析这样的场景显得无能为力,以前遇到的这个场景的解决办法是采用ntop中的pfring,这样稍微好点. pfring里有零拷贝的pcap插件,采用那个会好很多.</p>
+
+                </section>
+            </article>
+
+            
+
+            
+
+            
+
+            <footer id="footer">
+    
+    <p class="small">
+    
+       © Copyright 2017 <i class="fa fa-heart" aria-hidden="true"></i> 荣怡
+    
+    </p>
+    <p class="small">
+      If others would but reflect on mathematical truths as deeply and as continuously as I have, they would make my discoveries <br>-- Gauss
+    </p>
+</footer>
+
+        </section>
+
+        <script src="https://rongyi.github.io/js/jquery-2.2.4.min.js"></script>
+<script src="https://rongyi.github.io/js/main.js"></script>
+<script src="https://rongyi.github.io/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+    </body>
+</html>

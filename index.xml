@@ -6,10 +6,19 @@
     <description>Recent content on 技术随笔</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Jun 2017 19:48:04 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 24 Jun 2017 19:56:58 +0800</lastBuildDate>
     
 	<atom:link href="https://rongyi.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>libpcap代码剖析</title>
+      <link>https://rongyi.github.io/post/pcap/</link>
+      <pubDate>Sat, 24 Jun 2017 19:56:58 +0800</pubDate>
+      
+      <guid>https://rongyi.github.io/post/pcap/</guid>
+      <description>Table of Contents 1. 简介 2. 硬件设备的发现 3. 打开接口 3.1. pcap_create 3.2. pcap_activate 3.2.1. 获取link层协议 3.3. 注意点: 简介 libpcap 是抓包不可或缺的一个跨平台库，本篇文档试图剖析 libpcap Linux</description>
+    </item>
     
     <item>
       <title>Git</title>
