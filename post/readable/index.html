@@ -1,0 +1,215 @@
+    <!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="荣怡">
+		<meta name="description" content="雁过留声">
+		<meta name="generator" content="Hugo 0.25-DEV" />
+		<title>可读代码的重要性 &middot; 技术随笔</title>
+		<link rel="shortcut icon" href="https://rongyi.github.io/images/favicon.ico">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/style.css">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/highlight.css">
+		
+
+		
+		<link rel="stylesheet" href="https://rongyi.github.io/css/font-awesome.min.css">
+		
+
+		
+	</head>
+
+    <body>
+       <nav class="main-nav">
+	
+	
+		<a href='https://rongyi.github.io/'> <span class="arrow">←</span>Home</a>
+	
+	<a href='https://rongyi.github.io/post'>Archive</a>
+	<a href='https://rongyi.github.io/tags'>Tags</a>
+	<a href='https://rongyi.github.io/about'>About</a>
+
+	
+
+	
+</nav>
+
+
+        <section id="wrapper">
+            <article class="post">
+                <header>
+                    <h1>
+                        可读代码的重要性
+                    </h1>
+                    <h2 class="headline">
+                    Jun 24, 2017 19:45
+                    · 1089 words
+                    · 3 minutes read
+                      <span class="tags">
+                      
+                      </span>
+                    </h2>
+                </header>
+                
+                <section id="post-body">
+                    
+
+<h1 id="前言">前言</h1>
+
+<p>入职新公司，接收前任留下的code，觉得有些凌乱，于是乘势带着学习的心态又把整个代码重写了遍。期间又把去年度过的这本书拿过来重读了一遍，这本书举的例子是作者平时的一些总结，作为顶尖互联网公司(Google)的工程师对自己的一些“反省”，我觉得还是有普遍性的，很值得学习。</p>
+
+<h1 id="写代码的原则">写代码的原则</h1>
+
+<blockquote>
+<p>Code应该让别人花尽可能短的时间看懂/理解。</p>
+</blockquote>
+
+<p>不由得想起这句名言</p>
+
+<blockquote>
+<p>Programs must be written for people to read, and only incidentally for machines to execute.</p>
+
+<ul>
+<li>Abelson &amp; Sussman, SICP, preface to the first edition</li>
+</ul>
+</blockquote>
+
+<p>所以写代码的同时应该具有一种对可能看你代码的人的一种同情心，推己及人，站在阅读者的角度考虑一下，也许多思考一下加些<strong>该加</strong>的注释，或许会让看你代码的人少些痛苦，如果能多些愉悦，那就谢天谢地了。</p>
+
+<p>作者还提到一句比较本质的话摘录在这里：</p>
+
+<blockquote>
+<p>Engineering is all about breaking down big problems into smaller ones and putting the solutions for those problems back together
+author of this book</p>
+</blockquote>
+
+<p>该书有小到大展开，各章节如下：</p>
+
+<h1 id="变量名">变量名</h1>
+
+<p>Joshua Bloch在设计Java API时，身边总会放一本字典，（《Coders at works》p172）可见其对名字的重视程度。作为可读性的基石，变量名直接决定了代码质量的好坏。总结了一些：</p>
+
+<ul>
+<li><p>i/j/k不应该在循环变量之外出现这样的变量名。而且嵌套循环时还要考虑尽量不要用这样的变量名，因为如果取错index的话很难debug出来，而带有意义的index则一样就能看出来取错index了。</p></li>
+
+<li><p>temp/tmp/ret 仅用在显而易见的短的范围内，作为函数的返回值或者临时变量，除此之外杜绝使用。</p></li>
+
+<li><p>将变量附带一些信息：</p>
+
+<ul>
+<li>附带类型： 如_str, _arr， _p等</li>
+<li>如果是测量性质的最好带上单位： max_file_size_mb</li>
+<li>约束性质的最好带上边界词： max_xxx, min_xxx</li>
+<li>半开半闭区间的边界值变量：begin, end</li>
+<li>闭区间的边界值变量： first, last</li>
+<li>布尔变量带上： is, has, can, should让人一眼明了</li>
+<li>定义的位置： 不要先定义一大坨变量放在那里，用到的时候再定义也不迟。</li>
+</ul></li>
+</ul>
+
+<h1 id="代码风格">代码风格</h1>
+
+<p>参见<a href="https://github.com/torvalds/linux/blob/master/Documentation/zh_CN/CodingStyle" title="kernel coding style">kernel style</a></p>
+
+<ul>
+<li><p>注释原则</p>
+
+<blockquote>
+<p>好代码 &gt; 烂代码 + 好注释</p>
+</blockquote></li>
+</ul>
+
+<p>所以优先考虑写好代码然后再考虑写好注释的事。</p>
+
+<ul>
+<li><p>用TODO（要干的）/FIXME(已知不完美的)/HACK(承认写的有点hack的）</p></li>
+
+<li><p>传参时有需要可以加inline注释
+log_new_file(file_name, /* max_file_count= */10, /*max_file_size_mb=*/10)
+这样别人就不用再去看API找这两个参数什么意思了</p></li>
+</ul>
+
+<h1 id="control-flow方面">control flow方面</h1>
+
+<ul>
+<li><p>不要使用 do while （宏里面除外）</p></li>
+
+<li><p>if/else处理先后原则：</p>
+
+<ul>
+<li>先处理positive</li>
+<li>先处理简单</li>
+<li>先处理最interesting的</li>
+</ul></li>
+</ul>
+
+<h1 id="将大的表达式简化">将大的表达式简化</h1>
+
+<ul>
+<li>考虑用一个“cache”变量缓存大的表达式</li>
+<li>考虑用宏替换一些重复的代码</li>
+</ul>
+
+<h1 id="less-code">less code</h1>
+
+<p>又一句牛逼的话：</p>
+
+<blockquote>
+<p>The most readable code is no code at all</p>
+</blockquote>
+
+<p>映衬了这句话：</p>
+
+<blockquote>
+<p>Less is more</p>
+
+<p>建筑大师：路德維希·密斯·凡德羅</p>
+</blockquote>
+
+<p>所以：</p>
+
+<ul>
+<li>不要舍不得代码，觉得辛辛苦苦写的，该丢的丢，该删的删。要大气</li>
+<li>尽量多些通用的utility代码库，然后删除重复的部分</li>
+<li>将项目划分为正交的子项目</li>
+<li>对codebase的大小心里要有数</li>
+<li>没事看看你用的语言的API，找找感觉，下次有什么需求时就会想到有API而不是在那重复造轮子了。</li>
+</ul>
+
+                </section>
+            </article>
+
+            
+
+            
+
+            
+
+            <footer id="footer">
+    
+    <p class="small">
+    
+       © Copyright 2017 <i class="fa fa-heart" aria-hidden="true"></i> 荣怡
+    
+    </p>
+    <p class="small">
+      If others would but reflect on mathematical truths as deeply and as continuously as I have, they would make my discoveries <br>-- Gauss
+    </p>
+</footer>
+
+        </section>
+
+        <script src="https://rongyi.github.io/js/jquery-2.2.4.min.js"></script>
+<script src="https://rongyi.github.io/js/main.js"></script>
+<script src="https://rongyi.github.io/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+    </body>
+</html>

@@ -6,10 +6,19 @@
     <description>Recent content on 技术随笔</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Jun 2017 19:41:07 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 24 Jun 2017 19:45:44 +0800</lastBuildDate>
     
 	<atom:link href="https://rongyi.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>可读代码的重要性</title>
+      <link>https://rongyi.github.io/post/readable/</link>
+      <pubDate>Sat, 24 Jun 2017 19:45:44 +0800</pubDate>
+      
+      <guid>https://rongyi.github.io/post/readable/</guid>
+      <description>前言 入职新公司，接收前任留下的code，觉得有些凌乱，于是乘势带着学习的心态又把整个代码重写了遍。期间又把去年度过的这本书拿过来重读了一遍，</description>
+    </item>
     
     <item>
       <title>Vim</title>
