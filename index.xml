@@ -6,10 +6,19 @@
     <description>Recent content on 技术随笔</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Jun 2017 19:56:58 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 24 Jun 2017 19:58:43 +0800</lastBuildDate>
     
 	<atom:link href="https://rongyi.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Masscan代码剖析</title>
+      <link>https://rongyi.github.io/post/masscan/</link>
+      <pubDate>Sat, 24 Jun 2017 19:58:43 +0800</pubDate>
+      
+      <guid>https://rongyi.github.io/post/masscan/</guid>
+      <description>masscan源码分析 简介 HN上看到masscan的简介，作者号称这是世界上最快的端口扫描程序（三分钟扫描整个互联网）。而且这还是开源的，难</description>
+    </item>
     
     <item>
       <title>libpcap代码剖析</title>

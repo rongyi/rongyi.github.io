@@ -1,0 +1,188 @@
+    <!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="荣怡">
+		<meta name="description" content="雁过留声">
+		<meta name="generator" content="Hugo 0.25-DEV" />
+		<title>Masscan代码剖析 &middot; 技术随笔</title>
+		<link rel="shortcut icon" href="https://rongyi.github.io/images/favicon.ico">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/style.css">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/highlight.css">
+		
+
+		
+		<link rel="stylesheet" href="https://rongyi.github.io/css/font-awesome.min.css">
+		
+
+		
+	</head>
+
+    <body>
+       <nav class="main-nav">
+	
+	
+		<a href='https://rongyi.github.io/'> <span class="arrow">←</span>Home</a>
+	
+	<a href='https://rongyi.github.io/post'>Archive</a>
+	<a href='https://rongyi.github.io/tags'>Tags</a>
+	<a href='https://rongyi.github.io/about'>About</a>
+
+	
+
+	
+</nav>
+
+
+        <section id="wrapper">
+            <article class="post">
+                <header>
+                    <h1>
+                        Masscan代码剖析
+                    </h1>
+                    <h2 class="headline">
+                    Jun 24, 2017 19:58
+                    · 1407 words
+                    · 3 minutes read
+                      <span class="tags">
+                      
+                      </span>
+                    </h2>
+                </header>
+                
+                <section id="post-body">
+                    
+
+<h1 id="masscan源码分析">masscan源码分析</h1>
+
+<h2 id="简介">简介</h2>
+
+<p>HN上看到masscan的简介，作者号称这是世界上最快的端口扫描程序（三分钟扫描整个互联网）。而且这还是开源的，难免勾起自己的兴趣所以学习了一下。</p>
+
+<h2 id="调试前准备">调试前准备</h2>
+
+<p>获取源码：
+    git clone <a href="https://github.com/robertdavidgraham/masscan.git">https://github.com/robertdavidgraham/masscan.git</a></p>
+
+<p>拉高调试级别,编辑<code>src/logger.c</code>文件，将<code>global_debug_level</code>的值调高一点，尽可能多的打印信息方便跟踪源码。</p>
+
+<p>调整编译参数，修改<code>Makefile</code>将<code>CFLAGS</code>选项中的<code>O3</code>改为<code>O0</code>，这样在gdb中就不会因优化而跳来跳去，而是顺着源码一步步走下去。</p>
+
+<p>编译</p>
+
+<p>参数设置：先选择扫描简单的UDP，参数设置如下：
+    192.168.1.0/24 -p u:53</p>
+
+<h2 id="组件简介">组件简介</h2>
+
+<p>只能很粗略的说下代码路径。</p>
+
+<h3 id="参数处理">参数处理</h3>
+
+<p>入口： <code>masscan_command_line</code></p>
+
+<p>读命令行参数解析，初始化运行时的一个参数设置巨型结构体，此结构体包含了所有运行时信息，并且会将此信息以只读形式传递到收发线程中。</p>
+
+<p>IP range处理： <code>masscan_set_parameter</code></p>
+
+<p>这个函数全权负责参数的处理。第二个参数代表着不同的行为，是初始化ip range还是port还是其他的都通过此参数实现。以上述参数调用时的实参情况： <code>masscan_set_parameter(masscan, &quot;range&quot;, &quot;192.168.1.0/24&quot;)</code>。然后通过调用<code>range_parse_ipv4</code>函数产生IP段并挂到全局参数上。</p>
+
+<p>port range处理： <code>masscan_set_parameter(masscan, &quot;ports&quot;, &quot;u:53&quot;)</code>
+调用<code>rangelist_parse_port</code>。masscan对不同类型的port通过一个enum将port全部映射到unsigned int上。区间如下：</p>
+
+<pre><code>src/tmpl-port.h
+enum {
+  Templ_TCP = 0,
+    Templ_UDP = 65536,
+    Templ_SCTP = 65536*2,
+    Templ_ICMP_echo = 65536*3+0,
+    Templ_ICMP_timestamp = 65536*3+1,
+    Templ_ARP = 65536*3+2,
+};
+</code></pre>
+
+<h3 id="发送channel的初始化">发送channel的初始化</h3>
+
+<p>raw socket的初始化，我没有用pfring，走熟悉的pcap流程。
+    raw_sock_init()</p>
+
+<p>随机数种子的设置</p>
+
+<p>snmp相关初始化。</p>
+
+<h3 id="根据配置信息决定具体行为">根据配置信息决定具体行为</h3>
+
+<p>main函数中最后的switch中根据<code>massscan-&gt;op</code>决定具体的行为，是list help还是test，还是scan行为。这里只关注scan行为函数<code>main_scan</code></p>
+
+<h3 id="scan的过程">scan的过程</h3>
+
+<p>开线程，一个发一个收。</p>
+
+<p>scan的启动过程：
+1. <code>payload_trim</code> 根据扫描的端口去除一些不必要的payload模板以加速访问需要的payload的速度。顺便提下payload的初始化过程。在main开始部分<code>payload_create</code>用的是<code>tmpl-payloads.c</code>中的一些预定义的硬编码的payload数组。</p>
+
+<ol>
+<li><p>初始化网卡: <code>masscan_initialize_adapter</code>，调用的函数有：</p>
+
+<pre><code>rawsock_get_default_interface
+rawsock_get_adapter_ip
+rawsock_get_adapter_mac
+rawsock_init_adapter
+rawsock_ignore_transmit
+rawsock_get_default_gateway # 通过netlink获取第一跳IP地址
+arp_resolve_sync #通过arp获取第一跳路由的mac
+</code></pre></li>
+
+<li><p>初始化packet模板： <code>template_packet_init</code>， 分tcp/udp/等，在<code>templ-pkt.[hc]</code>中。</p></li>
+
+<li><p>开启发送线程： <code>transmit_thread</code>，此线程中调用的<code>rawsock_send_probe</code> <code>tempate_set_target</code>是理清头绪的关键。特别是后一个函数，怎样获取模板更改对应的IP/port后重新计算各层的checksum，大概脉络一下就清晰。</p></li>
+
+<li><p>开启接收线程： <code>receive_thread</code>，此线程中用recv接收frame之后调用<code>preprocess_frame</code>来解析frame。通过parsed的结果来区别什么协议，然后上对应handle。比如<code>handle_icmp</code> <code>handle_udp</code>默认handle tcp，所以不要去搜索这个函数，在recv中是tcp是直接跳出switch。</p></li>
+</ol>
+
+<h2 id="没看的地方">没看的地方</h2>
+
+<ol>
+<li>smack</li>
+<li>syn cookie的创建过程（扫描过程的session）以及匹配的过程。</li>
+<li>range乱序的算法。</li>
+</ol>
+
+                </section>
+            </article>
+
+            
+
+            
+
+            
+
+            <footer id="footer">
+    
+    <p class="small">
+    
+       © Copyright 2017 <i class="fa fa-heart" aria-hidden="true"></i> 荣怡
+    
+    </p>
+    <p class="small">
+      If others would but reflect on mathematical truths as deeply and as continuously as I have, they would make my discoveries <br>-- Gauss
+    </p>
+</footer>
+
+        </section>
+
+        <script src="https://rongyi.github.io/js/jquery-2.2.4.min.js"></script>
+<script src="https://rongyi.github.io/js/main.js"></script>
+<script src="https://rongyi.github.io/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+    </body>
+</html>
