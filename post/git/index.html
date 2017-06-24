@@ -1,0 +1,331 @@
+    <!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="荣怡">
+		<meta name="description" content="雁过留声">
+		<meta name="generator" content="Hugo 0.25-DEV" />
+		<title>Git &middot; 技术随笔</title>
+		<link rel="shortcut icon" href="https://rongyi.github.io/images/favicon.ico">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/style.css">
+		<link rel="stylesheet" href="https://rongyi.github.io/css/highlight.css">
+		
+
+		
+		<link rel="stylesheet" href="https://rongyi.github.io/css/font-awesome.min.css">
+		
+
+		
+	</head>
+
+    <body>
+       <nav class="main-nav">
+	
+	
+		<a href='https://rongyi.github.io/'> <span class="arrow">←</span>Home</a>
+	
+	<a href='https://rongyi.github.io/post'>Archive</a>
+	<a href='https://rongyi.github.io/tags'>Tags</a>
+	<a href='https://rongyi.github.io/about'>About</a>
+
+	
+
+	
+</nav>
+
+
+        <section id="wrapper">
+            <article class="post">
+                <header>
+                    <h1>
+                        Git
+                    </h1>
+                    <h2 class="headline">
+                    Jun 24, 2017 19:48
+                    · 2167 words
+                    · 5 minutes read
+                      <span class="tags">
+                      
+                      </span>
+                    </h2>
+                </header>
+                
+                <section id="post-body">
+                    
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Git简介</a></li>
+<li><a href="#sec-2">历史</a></li>
+<li><a href="#sec-3">Git设计原则</a></li>
+<li><a href="#sec-4">内部实现</a>
+<ul>
+<li><a href="#sec-4-1">Content 保存</a></li>
+<li><a href="#sec-4-2">存储模型</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">快速上手</a>
+<ul>
+<li><a href="#sec-5-1">标记自己</a></li>
+<li><a href="#sec-5-2">搞到repo</a></li>
+<li><a href="#sec-5-3">修改/提交</a></li>
+<li><a href="#sec-5-4">显示日志</a></li>
+<li><a href="#sec-5-5">分支相关</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">Git带来的开发模型</a></li>
+<li><a href="#sec-7">git碎片整理</a>
+<ul>
+<li><a href="#sec-7-1">找出一个committer修改过的所有的文件</a></li>
+</ul>
+</li>
+<li><a href="#sec-8">emacs中的magit</a></li>
+<li><a href="#sec-9">from </a></li>
+</ul>
+</div>
+</div>
+
+<h1 id="git简介-a-id-sec-1-name-sec-1-a">Git简介<a id="sec-1" name="sec-1"></a></h1>
+
+<h1 id="历史-a-id-sec-2-name-sec-2-a">历史<a id="sec-2" name="sec-2"></a></h1>
+
+<p>05年由Linux本人发明，伴随着Kernel的发展而产生。Kernel的头十年一直用 <code>diff/patch</code> 进行代码管控，后由商业公司BitMove赞助，将其公司产品BitKeeper供Kernel免费使用，后由于社区有人对BitKeeper进行逆向工程惹怒其母公司从而终止了BitKeeper对Kernel的授权。Linus因为不想回到 <code>diff/patch</code> 时代遂在当时寻找一种替代方案，他寻找的条件有两个：
+-   分布(distributed)
+-   可靠(reliable)</p>
+
+<p>遗憾的是当时没有一款管控工具入他的法眼，于是，他写了一个，命名为Git。</p>
+
+<h1 id="git设计原则-a-id-sec-3-name-sec-3-a">Git设计原则<a id="sec-3" name="sec-3"></a></h1>
+
+<p>上述的筛选条件就是Git的设计原则：
+-   Distributed
+-   Reliable
+-   High Performance</p>
+
+<p>Linux在Google的Tech Talk上讲Git时提到：</p>
+
+<blockquote>
+<p>If you are not distributed, you are not woth using</p>
+
+<p>&#x2013; Linus</p>
+</blockquote>
+
+<p>可见他把分布式看得有多重，因为要支持Kernel开发所以必须要支持可以在offline仍然可以开发并且在联网时可以方便提交的一种机制，而且在传输过程中保证数据的完整性，在这两个前提下保证对版本操作的高速。</p>
+
+<h1 id="内部实现-a-id-sec-4-name-sec-4-a">内部实现<a id="sec-4" name="sec-4"></a></h1>
+
+<p>以本人学习Git的经验在了解Git内部数据存储模型后会更好的掌握上层的操作命令。</p>
+
+<p>需要说明以下几个基本概念：
+-   repository</p>
+
+<pre><code>一个版本信息的集合，往往对应于一个project
+</code></pre>
+
+<ul>
+<li><p>Git directory</p>
+
+<p>Git用来保存内部数据的文件夹，一般为 <code>.git</code> 文件夹</p></li>
+
+<li><p>Working directory</p>
+
+<p>工作目录，一个工程所在的目录，一般指 <code>.git</code> 文件夹同级的位置。</p></li>
+</ul>
+
+<p>Git的数据类型有：
+-   blob
+-   tree
+-   tag
+-   commit</p>
+
+<p>需要记住两个大前提：
+1.  Git Never see files, only the content.
+2.  No Delta</p>
+
+<h2 id="content-保存-a-id-sec-4-1-name-sec-4-1-a">Content 保存<a id="sec-4-1" name="sec-4-1"></a></h2>
+
+<p>Git管控的最小基本单位是blob，而这个最小单位 <strong>不包括</strong> 文件名信息，仅仅与文件内容相关，也即如果有多份文件，而每份文件的内容都相同，这份内容在Git内部仅被保存一次。文件名保存在文件所在目录信息里。目录对应Git的存储结构是tree，如果你熟悉 <code>ext fs</code> 的话，对这样的说明一定不陌生。</p>
+
+<p>那怎么保证reliable？Git从最基本的文件做起，它保存文件内容的步骤：</p>
+
+<p>以被保存的文件内容为输入生成SHA1序列，一次SHA1序列为key将内容通过zlib压缩后作为此key的value保存，映射到文件系统中就是以key作为文件名，value写入此文件中，具体实现对40位的前两位建文件夹后38位建文件(在前两位的文件夹中)，将内容写入这38位的文件中。</p>
+
+<p>SHA1计算的具体实现：
+可以在Git源码中 <code>sha1_file.c:write_sha1_file_prepare</code> 中找到具体计算的过程。之前有讲过只跟文件内容相关，但不全是文件内容，详细的计算输入是：</p>
+
+<pre><code>|类型String|空格|文件内容长度|\0|文件内容|
+</code></pre>
+
+<p>这里有个问题：为什么要区分类型？如果只有一种类型不是更简洁更优雅吗？问题的答案在理解一下介绍的存储模型就清楚了。</p>
+
+<h2 id="存储模型-a-id-sec-4-2-name-sec-4-2-a">存储模型<a id="sec-4-2" name="sec-4-2"></a></h2>
+
+<p>Git保存的是snapshot而不是delta，这样的好处是不必关心中间的任何状态。以svn为例，从revision 1234 到2345的diff操作需要从1234到2345的所有delta patch过来然后通过网络传输过来，对于Git而言每次提交都完整保存stage中的状态，提交与提交之前有联系通过这个联系穿梭与版本之间。</p>
+
+<p>举个示例：</p>
+
+<pre><code>mkdir demo &amp;&amp; cd demo &amp;&amp; git init
+echo &quot;Amour&quot; &gt; demo.txt
+git add .
+git commit -m &quot;just a demo&quot;
+</code></pre>
+
+<p>上命令就完成了第一次提交，执行下列命令查看输出：</p>
+
+<pre><code>find .git/objects/ -type f |sort
+.git/objects/71/688ac8b8587aaf8818dc0c55d62e22e75b22ef
+.git/objects/c5/df312b024f98725ca13e4135225c640c67da24
+.git/objects/cd/6f44469f436230a1b6285b7b545d0738386ae6
+
+git cat-file -t 7168
+tree
+git cat-file -t c5df
+commit
+git cat-file -t cd6f
+blob
+
+git cat-file -p  7168
+100644 blob cd6f44469f436230a1b6285b7b545d0738386ae6 demo.txt
+
+git cat-file -p  c5df
+tree 71688ac8b8587aaf8818dc0c55d62e22e75b22ef
+author rongyi &lt;yi.rong@yamutech.com&gt; 1360044012 +0800
+committer rongyi &lt;yi.rong@yamutech.com&gt; 1360044012 +0800
+
+just a demo
+
+git cat-file -p  cd6f
+Amour
+</code></pre>
+
+<p>可以看见提交过程中的一些信息都保存在了Git object中。而各object之间的联系可以通过下图来描述。</p>
+
+<p><img src="/images/git_first.png" alt="img" /></p>
+
+<p>第二此提交些内容：</p>
+
+<pre><code>echo &quot;new year&quot; &gt; 2013.txt
+git add 2013.txt
+git commit -m &quot;happy new year&quot;
+</code></pre>
+
+<p>存储模型如下：</p>
+
+<p><img src="/images/git_second.png" alt="img" /></p>
+
+<p>这张图解释了为什么之前Git要分类型的问题，因为Git内部的存储模型为单向无环图(Directed Acyclic Graph)，分类型的原因即在于要维系好这个模型！如果在计算SHA1序列的过程中 <strong>仅仅</strong> 依赖文件内容的话，那从理论上可以构造出任意和tree，commit等SHA1序列一样的序列，这样这个模型一旦存有环就跨掉了。所以Git内部在计算SHA1序列时会在头部硬塞些内容来保正从用户的输入永远都不可能构造出存在环的情况，保重了Git的reliable。可以理解为我们在使用Git时永远都处于Git的用户态。</p>
+
+<h1 id="快速上手-a-id-sec-5-name-sec-5-a">快速上手<a id="sec-5" name="sec-5"></a></h1>
+
+<h2 id="标记自己-a-id-sec-5-1-name-sec-5-1-a">标记自己<a id="sec-5-1" name="sec-5-1"></a></h2>
+
+<pre><code>git config --global user.name &quot;大名&quot;
+git config --global user.email &quot;邮箱&quot;
+git config --global color.ui true
+git config --global alias.ls status
+git config --global merge.tool meld
+git config --global core.editor vim
+</code></pre>
+
+<h2 id="搞到repo-a-id-sec-5-2-name-sec-5-2-a">搞到repo<a id="sec-5-2" name="sec-5-2"></a></h2>
+
+<p>自己造？</p>
+
+<pre><code>git init || git init --bare
+</code></pre>
+
+<p>别人的？</p>
+
+<pre><code>git clone git@github.com/someone/somerepo.git
+</code></pre>
+
+<h2 id="修改-提交-a-id-sec-5-3-name-sec-5-3-a">修改/提交<a id="sec-5-3" name="sec-5-3"></a></h2>
+
+<pre><code>git add file.txt
+git commit -m &quot;fix XXX&quot;
+</code></pre>
+
+<h2 id="显示日志-a-id-sec-5-4-name-sec-5-4-a">显示日志<a id="sec-5-4" name="sec-5-4"></a></h2>
+
+<pre><code>git log -1
+git log -p
+git log -1 -p
+git show HEAD
+git show HEAD~1
+git log --grep=&quot;keystring&quot; #查询某次提交含有&quot;keystring&quot;的log
+git blame file.txt #same as svn blame
+</code></pre>
+
+<h2 id="分支相关-a-id-sec-5-5-name-sec-5-5-a">分支相关<a id="sec-5-5" name="sec-5-5"></a></h2>
+
+<p>分支在Git里是强烈推荐使用的，一般书上对Git中的分支都有两个字形容： <strong>extreamly lightweight</strong> ，本质就是在 <code>refs/heads</code> 中添加个文件，然后文件内容写上某次提交的SHA1序列。</p>
+
+<pre><code>git branch newbranch
+git checkout -b newbranch
+git checkout newbranch
+#make change and commit
+git checkout develop
+git merge --no-ff newbranch
+</code></pre>
+
+<h1 id="git带来的开发模型-a-id-sec-6-name-sec-6-a">Git带来的开发模型<a id="sec-6" name="sec-6"></a></h1>
+
+<p><a href="http://nvie.com/posts/a-successful-git-branching-model/">这里</a>介绍的很详细，不赘述。</p>
+
+<h1 id="git碎片整理-a-id-sec-7-name-sec-7-a">git碎片整理<a id="sec-7" name="sec-7"></a></h1>
+
+<h2 id="找出一个committer修改过的所有的文件-a-id-sec-7-1-name-sec-7-1-a">找出一个committer修改过的所有的文件<a id="sec-7-1" name="sec-7-1"></a></h2>
+
+<pre><code>git log --no-merges --stat --author=&quot;rongyi&quot; --name-only --pretty=format:&quot;&quot;&quot;&quot;
+</code></pre>
+
+<h1 id="emacs中的magit-a-id-sec-8-name-sec-8-a">emacs中的magit<a id="sec-8" name="sec-8"></a></h1>
+
+<p>不得不说magit大大提高的git的使用速度. Howard Abrams作了一个非常好的 <a href="https://www.youtube.com/watch?v%3DvQO7F2Q9DwA">demo</a>. 推荐.</p>
+
+<h1 id="from-https-csswizardry-com-2017-05-little-things-i-like-to-do-with-git-a-id-sec-9-name-sec-9-a">from <a href="https://csswizardry.com/2017/05/little-things-i-like-to-do-with-git/">https://csswizardry.com/2017/05/little-things-i-like-to-do-with-git/</a><a id="sec-9" name="sec-9"></a></h1>
+
+<pre><code># show commit summary
+git shortlog -sn
+</code></pre>
+
+                </section>
+            </article>
+
+            
+
+            
+
+            
+
+            <footer id="footer">
+    
+    <p class="small">
+    
+       © Copyright 2017 <i class="fa fa-heart" aria-hidden="true"></i> 荣怡
+    
+    </p>
+    <p class="small">
+      If others would but reflect on mathematical truths as deeply and as continuously as I have, they would make my discoveries <br>-- Gauss
+    </p>
+</footer>
+
+        </section>
+
+        <script src="https://rongyi.github.io/js/jquery-2.2.4.min.js"></script>
+<script src="https://rongyi.github.io/js/main.js"></script>
+<script src="https://rongyi.github.io/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+
+
+    </body>
+</html>
