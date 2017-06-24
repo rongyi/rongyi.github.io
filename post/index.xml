@@ -6,10 +6,19 @@
     <description>Recent content in Posts on 技术随笔</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Jun 2017 19:58:43 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 24 Jun 2017 20:00:16 +0800</lastBuildDate>
     
 	<atom:link href="https://rongyi.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>计算机名言</title>
+      <link>https://rongyi.github.io/post/quote/</link>
+      <pubDate>Sat, 24 Jun 2017 20:00:16 +0800</pubDate>
+      
+      <guid>https://rongyi.github.io/post/quote/</guid>
+      <description>Table of Contents 1. 计算机方面的名言警句 计算机方面的名言警句 Any fool can write code that a computer can u nderstand. Good programmer write code that humans can understand. &amp;#x2013; Martin Fowler You think you know when you learn, are more sure when you can write, even more when you can teach, but certain when you</description>
+    </item>
     
     <item>
       <title>Masscan代码剖析</title>
