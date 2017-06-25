@@ -6,10 +6,19 @@
     <description>Recent content on 技术随笔</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 24 Jun 2017 20:00:16 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 25 Jun 2017 09:34:42 +0800</lastBuildDate>
     
 	<atom:link href="https://rongyi.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>常用工具集</title>
+      <link>https://rongyi.github.io/post/toolset/</link>
+      <pubDate>Sun, 25 Jun 2017 09:34:42 +0800</pubDate>
+      
+      <guid>https://rongyi.github.io/post/toolset/</guid>
+      <description>Table of Contents 1. ag 2. tmux 3. mycli 4. meld/ cdiff 5. ycmd ag 代码搜索工具，效率高替代grep的命令行工具，又非常多的编辑器绑定，vim/emacs/atom都支持。 tmux 终端</description>
+    </item>
     
     <item>
       <title>计算机名言</title>
