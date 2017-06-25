@@ -6,10 +6,19 @@
     <description>Recent content in Posts on 技术随笔</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 25 Jun 2017 09:34:42 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 25 Jun 2017 10:26:32 +0800</lastBuildDate>
     
 	<atom:link href="https://rongyi.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Lisp书籍推荐</title>
+      <link>https://rongyi.github.io/post/lisp-book/</link>
+      <pubDate>Sun, 25 Jun 2017 10:26:32 +0800</pubDate>
+      
+      <guid>https://rongyi.github.io/post/lisp-book/</guid>
+      <description>Table of Contents 1. 简介 2. 开发环境 3. 入门读物 3.1. 《The Little Lisper》 3.2. 《ANSI Common Lisp》 4. 锻炼提高 4.1. 《Land of Lisp》 4.2. 《On Lisp》 4.3. 《L</description>
+    </item>
     
     <item>
       <title>常用工具集</title>
